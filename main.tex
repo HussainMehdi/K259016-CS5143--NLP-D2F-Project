@@ -1,0 +1,47 @@
+\documentclass[conference]{IEEEtran}
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{hyperref}
+
+\begin{document}
+
+\title{D2F-Rank: Multi-Label Feature Selection for Sentiment-Based E-commerce Product Ranking}
+
+\author{
+\IEEEauthorblockN{Syed Hussain Mehdi Raza}
+\IEEEauthorblockA{25k-9016}
+}
+
+\maketitle
+
+\section{Project Description}
+\subsection{Project Scope}
+We will use a Degree 2 feature dependency algorithm for building a ranking algorithm for e-commerce applications, where current search is based on keywords, relevance and ratings by score. In this project we will extract text features from customer reviews and will apply D2F method to extract best features for sentiment categories (e.g: Quality, Price, Shipping). These sentiments will be tested over rank based search over sentiment score based on product reviews.
+
+\subsection{Problem Statement and Motivation}
+Mostly e-commerce search engines use score based (star ratings) when sorted by reviews, because the review data is having redundant keywords which can abuse the accuracy of review based ranking system. Bringing a system that can achieve capture multiple instance (e.g: "Great battery but poor display"), will be part of solving in search indexing. Since this relation effect the benchmarks of product ratings and are related (connected) with each other. We believe that this will help improve our product search and help customers get better experience.
+
+\section{Seminal Paper and Resources}
+\subsection{Seminal Paper}
+Base paper used for motivation:
+\textit{J. Lee and D.-W. Kim, ``Mutual Information-based multi-label feature selection using interaction information,'' Expert Systems with Applications, vol. 42, no. 4, pp. 2013–2025, 2015}.
+
+\subsection{Datasets}
+\begin{itemize}
+    \item \textbf{Enron Corpus:} A standard dataset for organizing text with multiple labels, provided by Carnegie Mellon University. We will use this to test the basic performance of the D2F algorithm. Available at: \href{https://www.cs.cmu.edu/~enron/}{https://www.cs.cmu.edu/~enron/}
+    
+    \item \textbf{Amazon Product Data (McAuley Lab, UCSD):} The main dataset for testing our product ranking system. Hosted by UC San Diego, it has millions of detailed product reviews and ratings made for academic research. Available at: \href{https://amazon-reviews-2023.github.io/}{https://amazon-reviews-2023.github.io/}
+    
+    \item \textbf{Scene Dataset:} A popular multi-label dataset from the MULAN repository. The original paper used this to measure how much the algorithm reduces label confusion. Available at: \href{https://mulan.sourceforge.net/datasets-mlc.html}{https://mulan.sourceforge.net/datasets-mlc.html}
+\end{itemize}
+
+% \subsection{GitHub Repositories}
+% We will use these open-source codes to build our project:
+% \begin{itemize}
+%     \item \textbf{D2F/MI Implementation:} \href{https://github.com/CAU-AIR-Lab/D2F}{CAU-AIR-Lab/D2F} (The official code from the paper's authors to calculate Mutual Information and feature interactions).
+    
+%     \item \textbf{Sentiment Logic:} \href{https://github.com/yixuantt/FinEntity}{yixuantt/FinEntity} (Used to find specific product features and extract sentiments from text).
+    
+%     \item \textbf{Clustering/Ranking Guidance:} \href{https://github.com/zhang-yu-wei/ClusterLLM}{zhang-yu-wei/ClusterLLM} (Used as a base to turn our selected features into a working search and ranking system).
+% \end{itemize}
+\end{document}

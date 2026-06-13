@@ -1,0 +1,11 @@
+numpy
+pandas
+scipy
+scikit-learn
+requests
+huggingface_hub
+tqdm
+vaderSentiment
+nltk
+fastapi
+uvicorn[standard]

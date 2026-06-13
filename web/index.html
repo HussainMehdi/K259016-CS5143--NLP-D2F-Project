@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>D2F-Rank · Beauty Search</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --surface: #1a2332;
+      --border: #2d3a4f;
+      --text: #e7ecf3;
+      --muted: #8b9cb3;
+      --accent: #3b82f6;
+      --accent-dim: #2563eb;
+      --pos: #34d399;
+      --neg: #f87171;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+    header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    header h1 { margin: 0; font-size: 1.25rem; font-weight: 600; }
+    header p { margin: 0.25rem 0 0; font-size: 0.875rem; color: var(--muted); }
+    main { max-width: 1100px; margin: 0 auto; padding: 1.5rem; }
+    .search-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+    .row { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; }
+    label { display: block; font-size: 0.75rem; color: var(--muted); margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    input[type="text"], select {
+      width: 100%;
+      padding: 0.55rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 0.95rem;
+    }
+    input[type="text"]:focus, select:focus { outline: 2px solid var(--accent); border-color: transparent; }
+    .field { flex: 1; min-width: 140px; }
+    .field-wide { flex: 2; min-width: 220px; }
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.5rem 0;
+    }
+    .toggle {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; inset: 0;
+      background: var(--border);
+      border-radius: 24px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .slider::before {
+      content: "";
+      position: absolute;
+      width: 18px; height: 18px;
+      left: 3px; bottom: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: 0.2s;
+    }
+    .toggle input:checked + .slider { background: var(--accent); }
+    .toggle input:checked + .slider::before { transform: translateX(20px); }
+    .toggle-label { font-size: 0.9rem; }
+    .toggle-hint { font-size: 0.8rem; color: var(--muted); margin-top: 0.25rem; }
+    button {
+      padding: 0.6rem 1.25rem;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    button:hover { background: var(--accent-dim); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .status { font-size: 0.8rem; color: var(--muted); margin-bottom: 1rem; }
+    .status.error { color: var(--neg); }
+    .meta-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem 1.5rem;
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+    .meta-bar strong { color: var(--text); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 0.65rem 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    th {
+      background: rgba(0,0,0,0.2);
+      color: var(--muted);
+      font-weight: 500;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(59, 130, 246, 0.06); }
+    .title-cell { max-width: 360px; }
+    .title-cell a { color: var(--text); text-decoration: none; }
+    .title-cell a:hover { color: var(--accent); }
+    .num { font-variant-numeric: tabular-nums; }
+    .sort-col { color: var(--accent); font-weight: 600; }
+    .sent-pos { color: var(--pos); }
+    .sent-neg { color: var(--neg); }
+    .sent-neu { color: var(--muted); }
+    .empty { text-align: center; padding: 2rem; color: var(--muted); }
+    @media (max-width: 640px) {
+      table { display: block; overflow-x: auto; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>D2F-Rank · Amazon Beauty Search</h1>
+    <p>Compare star-rating sort vs review-sentiment sort (D2F + MLNB pipeline)</p>
+  </header>
+
+  <main>
+    <div class="search-panel">
+      <div class="row">
+        <div class="field field-wide">
+          <label for="query">Search products</label>
+          <input type="text" id="query" placeholder="e.g. moisturizer, serum, shampoo" autofocus />
+        </div>
+        <div class="field">
+          <label for="limit">Results</label>
+          <select id="limit">
+            <option value="10">10</option>
+            <option value="20" selected>20</option>
+            <option value="50">50</option>
+          </select>
+        </div>
+        <div class="field">
+          <button type="button" id="searchBtn">Search</button>
+        </div>
+      </div>
+
+      <div class="toggle-row" style="margin-top: 1rem;">
+        <label class="toggle" title="Sort by review sentiment">
+          <input type="checkbox" id="useSentiment" />
+          <span class="slider"></span>
+        </label>
+        <div>
+          <div class="toggle-label">Sort by review sentiment</div>
+          <div class="toggle-hint" id="toggleHint">Off → sorted by star rating (meta_rating)</div>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top: 0.75rem;">
+        <div class="field" id="traditionalSortWrap">
+          <label for="traditionalSort">Sort by (ratings)</label>
+          <select id="traditionalSort">
+            <option value="meta_rating">Star rating</option>
+            <option value="mean_rating">Mean review rating</option>
+            <option value="price">Price</option>
+            <option value="review_count">Review count</option>
+            <option value="title_relevance">Title relevance</option>
+          </select>
+        </div>
+        <div class="field" id="sentimentSortWrap" hidden>
+          <label for="sentimentSort">Sentiment aspect</label>
+          <select id="sentimentSort">
+            <option value="overall_sentiment">Overall</option>
+            <option value="sentiment_quality">Quality</option>
+            <option value="sentiment_price">Price</option>
+            <option value="sentiment_shipping">Shipping</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <p class="status" id="status">Checking API…</p>
+    <div class="meta-bar" id="metaBar" hidden></div>
+    <div id="results"></div>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    function fmtSent(v) {
+      if (v == null || Number.isNaN(v)) return "—";
+      const n = Number(v);
+      const cls = n > 0.1 ? "sent-pos" : n < -0.1 ? "sent-neg" : "sent-neu";
+      const sign = n > 0 ? "+" : "";
+      return `<span class="num ${cls}">${sign}${n.toFixed(2)}</span>`;
+    }
+
+    function fmtRating(v) {
+      if (v == null) return "—";
+      return `<span class="num">${Number(v).toFixed(1)}</span>`;
+    }
+
+    function fmtPrice(v) {
+      if (v == null) return "—";
+      return `<span class="num">$${Number(v).toFixed(2)}</span>`;
+    }
+
+    function updateToggleUI() {
+      const on = $("useSentiment").checked;
+      $("traditionalSortWrap").hidden = on;
+      $("sentimentSortWrap").hidden = !on;
+      $("toggleHint").textContent = on
+        ? "On → ranked by predicted review sentiment (D2F features)"
+        : "Off → sorted by star rating / price / relevance";
+    }
+
+    $("useSentiment").addEventListener("change", updateToggleUI);
+
+    async function checkHealth() {
+      try {
+        const res = await fetch("/health");
+        const data = await res.json();
+        if (data.store_loaded) {
+          $("status").textContent = `API ready · ${data.product_count} products · ${data.version || ""}`;
+          $("status").classList.remove("error");
+        } else {
+          $("status").textContent = "Store not loaded — run: python run_amazon.py";
+          $("status").classList.add("error");
+        }
+      } catch {
+        $("status").textContent = "Cannot reach API — start: uvicorn amazon_api:app --reload";
+        $("status").classList.add("error");
+      }
+    }
+
+    function renderTable(products, sortBy) {
+      if (!products.length) {
+        $("results").innerHTML = '<p class="empty">No products found. Try another search.</p>';
+        return;
+      }
+
+      const cols = [
+        { key: "_rank", label: "#" },
+        { key: "product_title", label: "Product" },
+        { key: "meta_rating", label: "Stars" },
+        { key: "price", label: "Price" },
+        { key: "overall_sentiment", label: "Overall" },
+        { key: "sentiment_quality", label: "Quality" },
+        { key: "sentiment_price", label: "Price sent." },
+        { key: "sentiment_shipping", label: "Shipping" },
+        { key: "review_count", label: "Reviews" },
+      ];
+
+      let html = "<table><thead><tr>";
+      for (const c of cols) {
+        const cls = c.key === sortBy ? " sort-col" : "";
+        html += `<th class="${cls}">${c.label}</th>`;
+      }
+      html += "</tr></thead><tbody>";
+
+      products.forEach((p, i) => {
+        html += "<tr>";
+        for (const c of cols) {
+          const cls = c.key === sortBy ? " sort-col" : "";
+          let cell = "";
+          if (c.key === "_rank") cell = i + 1;
+          else if (c.key === "product_title") {
+            const t = p.product_title || p.parent_asin || "—";
+            cell = `<div class="title-cell">${escapeHtml(t)}</div>`;
+          } else if (c.key === "meta_rating") cell = fmtRating(p.meta_rating);
+          else if (c.key === "price") cell = fmtPrice(p.price);
+          else if (c.key.startsWith("sentiment") || c.key === "overall_sentiment") cell = fmtSent(p[c.key]);
+          else if (c.key === "review_count") cell = `<span class="num">${p.review_count ?? "—"}</span>`;
+          else cell = p[c.key] ?? "—";
+          html += `<td class="${cls} num">${cell}</td>`;
+        }
+        html += "</tr>";
+      });
+      html += "</tbody></table>";
+      $("results").innerHTML = html;
+    }
+
+    function escapeHtml(s) {
+      const d = document.createElement("div");
+      d.textContent = s;
+      return d.innerHTML;
+    }
+
+    async function search() {
+      const query = $("query").value.trim();
+      const useSentiment = $("useSentiment").checked;
+      const sortBy = useSentiment
+        ? $("sentimentSort").value
+        : $("traditionalSort").value;
+      const limit = $("limit").value;
+
+      $("searchBtn").disabled = true;
+      $("status").textContent = "Searching…";
+      $("status").classList.remove("error");
+
+      const params = new URLSearchParams({
+        use_sentiment: useSentiment,
+        sort_by: sortBy,
+        order: "desc",
+        limit,
+      });
+      if (query) params.set("query", query);
+
+      try {
+        const res = await fetch(`/api/products?${params}`);
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.detail || res.statusText);
+        }
+        const data = await res.json();
+        $("metaBar").hidden = false;
+        $("metaBar").innerHTML = `
+          <span><strong>${data.count}</strong> results</span>
+          <span>Sort: <strong>${data.sort_by}</strong></span>
+          <span>Sentiment mode: <strong>${data.use_sentiment ? "ON" : "OFF"}</strong></span>
+          ${data.query ? `<span>Query: <strong>${escapeHtml(data.query)}</strong></span>` : ""}
+        `;
+        renderTable(data.products, data.sort_by);
+        $("status").textContent = "Done";
+      } catch (e) {
+        $("status").textContent = String(e.message || e);
+        $("status").classList.add("error");
+        $("results").innerHTML = "";
+      } finally {
+        $("searchBtn").disabled = false;
+      }
+    }
+
+    $("searchBtn").addEventListener("click", search);
+    $("query").addEventListener("keydown", (e) => { if (e.key === "Enter") search(); });
+
+    updateToggleUI();
+    checkHealth().then(() => search());
+  </script>
+</body>
+</html>
